@@ -35,7 +35,7 @@
     }
   }
 
-  const version = "3.0.0"
+  const version = "3.0.1"
 
   const WS_CMD_TTS_CONNECT = "tts_connect"
   const WS_CMD_TTS_MESSAGE = "tts_message"
@@ -96,7 +96,7 @@
     audioPlaying = false
   })
 
-  function findGetParameter (parameterName) {
+  function findGetParameter(parameterName) {
     let result = null
     let tmp = []
     location.search
@@ -178,7 +178,7 @@
       let data = {
         cmd: WS_CMD_TTS_CONNECT,
         data: {
-          channel: (findGetParameter("channel") || "").toLowerCase()
+          channel: (findGetParameter("channel") || "").replace('\u{E0000}', '').trim().toLowerCase()
         },
         version: version
       }
