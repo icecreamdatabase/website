@@ -35,7 +35,9 @@
     }
   }
 
-  const version = "3.0.1"
+  const version = "3.0.2"
+
+  const SE_API_TIMEOUT = 10000 // 10 seconds
 
   const WS_CMD_TTS_CONNECT = "tts_connect"
   const WS_CMD_TTS_MESSAGE = "tts_message"
@@ -96,7 +98,7 @@
     audioPlaying = false
   })
 
-  function findGetParameter(parameterName) {
+  function findGetParameter (parameterName) {
     let result = null
     let tmp = []
     location.search
@@ -121,23 +123,24 @@
       }
     }
 
-    let response = await fetch("https://api.streamelements.com/kappa/v2/speech?voice=" +
-      voice +
-      "&text=" +
-      encodeURIComponent(text.trim()))
+    console.log(`Starting TTS request: ${voice}: ${encodeURIComponent(text.trim())}`)
+    //let response = await fetch(`https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(text.trim())}`)
+    let response = await fetchWithTimeout(`https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(text.trim())}`, SE_API_TIMEOUT)
 
-    // Rate limiting headers
-    //rlLimit = response.headers.get('x-ratelimit-limit')
-    let newRlReset = response.headers.get('x-ratelimit-reset')
-    if (newRlReset > rlReset) {
-      rlReset = newRlReset
-      rlRemaining = 30
-    } else {
-      rlRemaining = response.headers.get('x-ratelimit-remaining')
+    if (response.status !== -1) {
+      // Rate limiting headers
+      //rlLimit = response.headers.get('x-ratelimit-limit')
+      let newRlReset = response.headers.get('x-ratelimit-reset')
+      if (newRlReset > rlReset) {
+        rlReset = newRlReset
+        rlRemaining = 30
+      } else {
+        rlRemaining = response.headers.get('x-ratelimit-remaining')
+      }
+      //console.log(rlRemaining, rlReset, Date.now(), rlReset - Date.now())
     }
-    //console.log(rlRemaining, rlReset, Date.now(), rlReset - Date.now())
 
-    if (response.status === 429) {
+    if (response.status === 429 || response.status === -1) {
       console.warn(await response.text())
       await speak(text, voice, playbackrate)
       return
@@ -157,6 +160,23 @@
     player.load()
     player.play()
     player.playbackRate = playbackrate
+  }
+
+  function fetchWithTimeout (url, delay) {
+    const timer = new Promise((resolve) => {
+      setTimeout(resolve, delay, {
+        timeout: true,
+      })
+    })
+    return Promise.race([
+      fetch(url),
+      timer
+    ]).then(response => {
+      if (response.timeout) {
+        return {status: -1, text: () => `Request took over ${SE_API_TIMEOUT / 1000} seconds. Trying again`}
+      }
+      return response
+    })
   }
 
   function skip () {
