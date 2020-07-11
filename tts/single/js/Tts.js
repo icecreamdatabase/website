@@ -12,13 +12,15 @@ class Tts {
     this.audioPlaying = false
     this.volume = 100
     this.maxMessageTime = 0
+    /** @type {TtsMessageData[][]} */
     this.msgQueue = []
+    /** @type {TtsMessageData[]} */
     this.currentMessage = []
     /** @type {number} */
     this.currentMessageTimeoutId = undefined
 
 
-    eventify(msgQueue, this.onMsgQueuePush.bind(this))
+    eventify(this.msgQueue, this.onMsgQueuePush.bind(this))
 
     document.getElementById("player").addEventListener("ended", this.onPlayerEnded.bind(this))
 
@@ -29,7 +31,10 @@ class Tts {
    * @return {Promise<void>}
    */
   async onMessage (data) {
-
+    this.volume = data.volume !== undefined ? data.volume : this.volume
+    this.maxMessageTime = data.maxMessageTime !== undefined ? data.maxMessageTime : this.maxMessageTime
+    this.useQueue = !!data.queue
+    this.msgQueue.push(data.data)
   }
 
   async onMsgQueuePush (arr) {
@@ -47,39 +52,44 @@ class Tts {
           this.skip()
         }, 1000 * this.maxMessageTime)
       }
-      await speak(msgObj.message, msgObj.voice, msgObj.playbackrate)
+      await this.speak(msgObj.message, msgObj.voice, msgObj.playbackrate)
     }
   }
 
   async onPlayerEnded () {
-    if (currentMessage.length > 0) {
-      let msgObj = currentMessage.shift()
-      await speak(msgObj.message, msgObj.voice, msgObj.playbackrate)
+    if (this.currentMessage.length > 0) {
+      let msgObj = this.currentMessage.shift()
+      await this.speak(msgObj.message, msgObj.voice, msgObj.playbackrate)
       return
     }
 
     // Delay between messages
     await sleep(1000)
 
-    if (msgQueue.length > 0) {
-      currentMessage = msgQueue.shift()
-      let msgObj = currentMessage.shift()
+    if (this.msgQueue.length > 0) {
+      this.currentMessage = this.msgQueue.shift()
+      let msgObj = this.currentMessage.shift()
       if (msgObj) {
-        await speak(msgObj.message, msgObj.voice, msgObj.playbackrate)
+        await this.speak(msgObj.message, msgObj.voice, msgObj.playbackrate)
         return
       }
     }
 
-    audioPlaying = false
+    this.audioPlaying = false
   }
 
   async speak (text, voice = "Brian", playbackrate = 1.0) {
+    let player = document.getElementById("player")
 
-    let mp3 = await this.main.ttsApi.getMp3(voice, text).blob()
+    let mp3 = await this.main.ttsApi.getMp3(voice, text)
+    if (!mp3) {
+      player.pause()
+      player.dispatchEvent(new Event("ended"))
+      return
+    }
 
     let blobUrl = URL.createObjectURL(mp3)
     document.getElementById("source").setAttribute("src", blobUrl)
-    let player = document.getElementById("player")
     player.volume = this.volume / 100
     player.pause()
     player.load()
@@ -89,7 +99,7 @@ class Tts {
 
   skip () {
     console.log("Skipping current message ...")
-    currentMessage = []
+    this.currentMessage = []
     let player = document.getElementById("player")
     player.pause()
     player.dispatchEvent(new Event("ended"))

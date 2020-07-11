@@ -63,12 +63,12 @@ class TtsApi {
     if (response.status !== -1) {
       // Rate limiting headers
       //rlLimit = response.headers.get('x-ratelimit-limit')
-      let newRlReset = response.headers.get('x-ratelimit-reset')
-      if (newRlReset > rlReset) {
-        rlReset = newRlReset
-        rlRemaining = 30
+      let newRlReset = parseInt(response.headers.get('x-ratelimit-reset'))
+      if (newRlReset > this.rlReset) {
+        this.rlReset = newRlReset
+        this.rlRemaining = 30
       } else {
-        rlRemaining = response.headers.get('x-ratelimit-remaining')
+        this.rlRemaining = response.headers.get('x-ratelimit-remaining')
       }
     }
 
