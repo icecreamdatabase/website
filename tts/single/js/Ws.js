@@ -26,7 +26,12 @@ class Ws {
    * @property {number} [playbackrate]
    */
 
-  constructor () {
+  /**
+   * @param {Main} main
+   */
+  constructor (main) {
+    this.main = main
+
     /**
      * @type {WebSocket}
      */
@@ -73,6 +78,7 @@ class Ws {
   /**
    * @param {MessageEvent} event
    * @return {Promise<void>}
+   * @private
    */
   async onOpen (event) {
     console.log("Connected")
@@ -90,6 +96,7 @@ class Ws {
   /**
    * @param {MessageEvent} event
    * @return {Promise<void>}
+   * @private
    */
   async onMessage (event) {
     /** @type {WsData} */
@@ -130,6 +137,7 @@ class Ws {
   /**
    * @param {MessageEvent} event
    * @return {Promise<void>}
+   * @private
    */
   async onClose (event) {
     this.socket = null
@@ -139,6 +147,7 @@ class Ws {
   /**
    * @param {MessageEvent} event
    * @return {Promise<void>}
+   * @private
    */
   async onError (event) {
     //this.socket = null

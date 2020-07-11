@@ -10,3 +10,18 @@ const eventify = (arr, callback) => {
     callback(arr)
   }
 }
+
+function findGetParameter (parameterName) {
+  let result = null
+  let tmp = []
+  location.search
+    .substr(1)
+    .split("&")
+    .forEach(item => {
+      tmp = item.split("=")
+      if (tmp[0].toLowerCase() === parameterName.toLowerCase()) {
+        result = decodeURIComponent(tmp[1])
+      }
+    })
+  return result
+}
