@@ -97,7 +97,7 @@ class Tts {
 
       //this might take a while when the API is overloaded
       this.isPrefetchingAudio = true
-      let data = await Promise.allSettled(this.conversationQueue.map(conversationElement => this.main.ttsApi.getMp3(conversationElement.voice, conversationElement.message)))
+      let data = await Promise.all(this.conversationQueue.map(conversationElement => this.main.ttsApi.getMp3(conversationElement.voice, conversationElement.message)))
       this.isPrefetchingAudio = false
 
       // add the blob to the queue elements
