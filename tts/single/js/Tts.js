@@ -93,7 +93,7 @@ class Tts {
     /* ----- process next redemption queue element and start first conversationQueue element ---- */
     if (this.redemptionQueue.length > 0) {
       this.conversationQueue = this.redemptionQueue.shift()
-      this.emit(TtsEvents.NEW_REDEMPTION, this.conversationQueue)
+      this.emit(TtsEvents.NEW_REDEMPTION_ELEMENT, this.conversationQueue)
 
       //this might take a while when the API is overloaded
       this.isPrefetchingAudio = true
@@ -157,6 +157,7 @@ class Tts {
   async onPlayerEnded () {
     this.lastMessagEndTimestamp = Date.now()
     this.audioPlaying = false
+    this.emit(TtsEvents.ENDED, undefined)
     await this.run()
   }
 
@@ -166,7 +167,6 @@ class Tts {
     let player = document.getElementById("player")
     player.pause()
     this.emit(TtsEvents.SKIP, undefined)
-    this.emit(TtsEvents.ENDED, undefined)
     player.dispatchEvent(new Event("ended"))
   }
 

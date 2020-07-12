@@ -7,7 +7,7 @@ const WsCmds = Object.freeze({
 })
 
 const TtsEvents = Object.freeze({
-  "NEW_REDEMPTION": "redemption",
+  "NEW_REDEMPTION_ELEMENT": "redemption",
   "NEW_CONVERSATION_ELEMENT": "conversation",
   "SKIP": "skip",
   "ENDED": "ended"
