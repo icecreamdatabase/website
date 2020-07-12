@@ -124,10 +124,6 @@ class Ws {
           return
         }
         this.emit(WsCmds.MESSAGE, obj.data)
-        //volume = obj.data.volume || volume
-        //maxMessageTime = obj.data.maxMessageTime || maxMessageTime
-        //msgQueue.push(obj.data.data)
-        //useQueue = !!obj.data.queue
         break
       default:
         console.error(`Unkown obj.cmd type: ${obj.cmd}`)
