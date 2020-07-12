@@ -10,6 +10,7 @@ class Tts {
 
     this.useQueue = true
     this.audioPlaying = false
+    this.isPrefetchingAudio = false
     this.volume = 100
     this.maxMessageTime = 0
     /** @type {TtsMessageData[][]} */
@@ -18,8 +19,40 @@ class Tts {
     this.conversationQueue = []
     /** @type {number} */
     this.currentMessageTimeoutId = undefined
+    /** @type {number} */
+    this.lastMessagEndTimestamp = 0
+
+    /**
+     * @type {Object.<string,function(Object)[]>}
+     */
+    this.eventCallbacks = {}
 
     document.getElementById("player").addEventListener("ended", this.onPlayerEnded.bind(this))
+  }
+
+
+  /**
+   * @param {string} event
+   * @param {function(Object)} cb
+   */
+  on (event, cb) {
+    if (!Object.prototype.hasOwnProperty.call(this.eventCallbacks, event)) {
+      this.eventCallbacks[event] = []
+    }
+    this.eventCallbacks[event].push(cb)
+  }
+
+  /**
+   * @param {string} event
+   * @param {Object} data
+   * @private
+   */
+  emit (event, data) {
+    if (Object.prototype.hasOwnProperty.call(this.eventCallbacks, event)) {
+      for (const cb of this.eventCallbacks[event]) {
+        cb(data)
+      }
+    }
   }
 
   /**
@@ -32,25 +65,50 @@ class Tts {
     this.useQueue = !!data.queue
     this.redemptionQueue.push(data.data)
 
-    await this.playRedemptionElement()
+    await this.run()
   }
 
-  async playRedemptionElement () {
-    if (this.audioPlaying && this.useQueue || this.main.ttsApi.rateLimited) {
+  async run () {
+    if (this.audioPlaying && this.useQueue || this.isPrefetchingAudio) {
       return
     }
 
-    this.conversationQueue = this.redemptionQueue.shift()
-    let conversationElement = this.conversationQueue.shift()
-    if (conversationElement) {
-      this.audioPlaying = true
+    /* ---- Do we skip due to the queue or do we play the next conversaiontElement in the queue ----- */
+    if (this.conversationQueue.length > 0) { // conversations left
+      if (this.redemptionQueue.length > 0 && !this.useQueue) { // redemptions left and no queueing allowed
+        //clear conversation queue
+        this.conversationQueue = []
+      } else {
+        //play next
+        await this.playConversationElement(this.conversationQueue.shift())
+        return
+      }
+    }
+
+    /* ----- process next redemption queue element and start first conversationQueue element ---- */
+    if (this.redemptionQueue.length > 0) {
+      this.conversationQueue = this.redemptionQueue.shift()
+      this.emit(TtsEvents.NEW_REDEMPTION, this.conversationQueue)
+
+      //this might take a while when the API is overloaded
+      this.isPrefetchingAudio = true
+      let data = await Promise.allSettled(this.conversationQueue.map(conversationElement => this.main.ttsApi.getMp3(conversationElement.voice, conversationElement.message)))
+      this.isPrefetchingAudio = false
+
+      // add the blob to the queue elements
+      for (let i = 0; i < this.conversationQueue.length; i++) {
+        // noinspection JSValidateTypes
+        this.conversationQueue[i].blob = data[i].value
+      }
+
+      // Deal with maxMessageTime
       clearTimeout(this.currentMessageTimeoutId)
       if (this.maxMessageTime > 0) {
-        this.currentMessageTimeoutId = setTimeout(() => {
-          this.skip()
-        }, 1000 * this.maxMessageTime)
+        this.currentMessageTimeoutId = setTimeout(() => this.skip(), 1000 * this.maxMessageTime)
       }
-      await this.playConversationElement(conversationElement)
+
+      // Start first of next queue.
+      await this.playConversationElement(this.conversationQueue.shift())
     }
   }
 
@@ -59,16 +117,24 @@ class Tts {
    * @return {Promise<void>}
    */
   async playConversationElement (conversationElement) {
+    this.audioPlaying = true
+    this.emit(TtsEvents.NEW_CONVERSATION_ELEMENT, conversationElement)
     let player = document.getElementById("player")
 
-    let mp3 = await this.main.ttsApi.getMp3(conversationElement.voice, conversationElement.message)
-    if (!mp3) {
+    // Either use prefetched blob or fetch new one individually
+    let mp3Blob = conversationElement.blob
+      ? conversationElement.blob
+      : await this.main.ttsApi.getMp3(conversationElement.voice, conversationElement.message)
+
+    // if blob still failed something must be wrong. Simply skip that element.
+    if (!mp3Blob) {
       player.pause()
       player.dispatchEvent(new Event("ended"))
       return
     }
 
-    let blobUrl = URL.createObjectURL(mp3)
+    // Play blob
+    let blobUrl = URL.createObjectURL(mp3Blob)
     document.getElementById("source").setAttribute("src", blobUrl)
     player.volume = this.volume / 100
     player.pause()
@@ -78,25 +144,9 @@ class Tts {
   }
 
   async onPlayerEnded () {
-    if (this.conversationQueue.length > 0) {
-      let conversationElement = this.conversationQueue.shift()
-      await this.playConversationElement(conversationElement)
-      return
-    }
-
-    // Delay between messages
-    await sleep(1000)
-
-    if (this.redemptionQueue.length > 0) {
-      this.conversationQueue = this.redemptionQueue.shift()
-      let conversationElement = this.conversationQueue.shift()
-      if (conversationElement) {
-        await this.playConversationElement(conversationElement)
-        return
-      }
-    }
-
+    this.lastMessagEndTimestamp = Date.now()
     this.audioPlaying = false
+    await this.run()
   }
 
   skip () {
@@ -104,6 +154,8 @@ class Tts {
     this.conversationQueue = []
     let player = document.getElementById("player")
     player.pause()
+    this.emit(TtsEvents.SKIP, undefined)
+    this.emit(TtsEvents.ENDED, undefined)
     player.dispatchEvent(new Event("ended"))
   }
 

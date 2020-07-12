@@ -10,4 +10,4 @@ class Main {
   }
 }
 
-new Main()
+const main = new Main()

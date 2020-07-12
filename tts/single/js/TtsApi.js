@@ -57,7 +57,7 @@ class TtsApi {
       }
     }
 
-    console.log(`Starting TTS request: ${voice}: ${encodeURIComponent(text.trim())}`)
+    console.log(`Starting TTS request: ${voice}: ${text.trim()}`)
     let response = await this.fetchWithTimeout(`https://api.streamelements.com/kappa/v2/speech?voice=${voice}&text=${encodeURIComponent(text.trim())}`, apiTimeout)
 
     if (response.status !== -1) {

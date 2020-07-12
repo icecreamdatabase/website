@@ -5,3 +5,10 @@ const WsCmds = Object.freeze({
   "SKIP": "tts_skip",
   "RELOAD": "tts_reload"
 })
+
+const TtsEvents = Object.freeze({
+  "NEW_REDEMPTION": "redemption",
+  "NEW_CONVERSATION_ELEMENT": "conversation",
+  "SKIP": "skip",
+  "ENDED": "ended"
+})

@@ -24,6 +24,7 @@ class Ws {
    * @property {string} message
    * @property {string} voice
    * @property {number} [playbackrate]
+   * @property {Blob} blob
    */
 
   /**
@@ -43,6 +44,7 @@ class Ws {
   }
 
   /**
+   * Available events: WsCmd.MESSAGE
    * @param {string} event
    * @param {function(Object)} cb
    */
