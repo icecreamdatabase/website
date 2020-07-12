@@ -111,7 +111,7 @@ class Ws {
         location.reload()
         break
       case WsCmds.SKIP:
-        skip() //TODO
+        this.main.tts.skip()
         break
       case WsCmds.MESSAGE:
         // noinspection JSValidateTypes <-- Yes it's only WsTtsMessage. That is what we check in the else if above
