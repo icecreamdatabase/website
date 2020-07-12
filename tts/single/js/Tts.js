@@ -80,6 +80,11 @@ class Tts {
         this.conversationQueue = []
       } else {
         //play next
+        let sleepDuration = this.lastMessagEndTimestamp - Date.now() + TIME_BETWEEN_CONVERSATION_ELEMENT
+        console.debug(`Next conversation; Waiting for ${sleepDuration} ms`)
+        if (sleepDuration > 0) {
+          await sleep(sleepDuration)
+        }
         await this.playConversationElement(this.conversationQueue.shift())
         return
       }
@@ -99,6 +104,12 @@ class Tts {
       for (let i = 0; i < this.conversationQueue.length; i++) {
         // noinspection JSValidateTypes
         this.conversationQueue[i].blob = data[i].value
+      }
+
+      let sleepDuration = this.lastMessagEndTimestamp - Date.now() + TIME_BETWEEN_REDEMPTION_ELEMENTS
+      console.debug(`Next redemption; Waiting for ${sleepDuration} ms`)
+      if (sleepDuration > 0) {
+        await sleep(sleepDuration)
       }
 
       // Deal with maxMessageTime
