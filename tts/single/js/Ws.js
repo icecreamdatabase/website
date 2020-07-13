@@ -13,6 +13,7 @@ class Ws {
    * @typedef {object} WsTtsMessage
    * @property {string} channel
    * @property {string} redeemer
+   * @property {string} redeemerColor
    * @property {TtsMessageData[]} data
    * @property {boolean} queue
    * @property {number} volume
@@ -24,6 +25,8 @@ class Ws {
    * @property {string} message
    * @property {string} voice
    * @property {number} [playbackrate]
+   * @property {string} [redeemer]
+   * @property {string} [redeemerColor]
    * @property {Blob} blob
    */
 

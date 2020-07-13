@@ -9,60 +9,59 @@ class OnScreenMessage {
   constructor (main) {
     this.main = main
 
-    // Initialize the parameters.
-    this.notify = !!findGetParameter("notifications")
-    this.notifyWidth = findGetParameter("width") || "630px"
-    this.fontSize = findGetParameter("fontsize") || "13px"
-    this.textRedeemerColor = OnScreenMessage.fixColorInput(findGetParameter("redeemercolor")) || "#9147ff"
-    this.textContentColor = OnScreenMessage.fixColorInput(findGetParameter("contentcolor")) || "white"
+    // If no notifcation don't set any settings or add event handlers
+    if (!findGetParameter("notifications")) {
+      return
+    }
 
-    // Notifications
-    this.notifyElement = document.getElementById("notifications")
-    this.notifyRedeemer = document.getElementById("notifyRedeemer")
-    this.notifyContent = document.getElementById("notifyContent")
+    // Set style from query parameter
+    document.getElementById("notifications").style.width = findGetParameter("width") || "630px"
+    document.getElementById("notifications").style.fontSize = findGetParameter("fontsize") || "13px"
 
+    this.redeemerColorOverwrite = OnScreenMessage.fixColorInput(findGetParameter("redeemercolor")) // || "#9147ff"
+    document.getElementById("notifyContent").style.color = OnScreenMessage.fixColorInput(findGetParameter("contentcolor")) || "white"
 
-    // Notifications styles
-    this.notifyElement.style.width = this.notifyWidth
-    this.notifyElement.style.fontSize = this.fontSize
-    this.notifyElement.style.fontFamily = "Arial, sans-serif"
-
-    this.notifyRedeemer.style.color = this.textRedeemerColor
-    this.notifyRedeemer.style.fontWeight = "bold"
-
-    this.notifyContent.style.color = this.textContentColor
-
-
-    this.main.tts.on(TtsEvents.NEW_CONVERSATION_ELEMENT, this.sendToNotifications.bind(this))
+    this.main.tts.on(TtsEvents.NEW_CONVERSATION_ELEMENT, this.startNotifications.bind(this))
     this.main.tts.on(TtsEvents.ENDED, this.endNotifications.bind(this))
   }
 
-
+  /**
+   * @param {string|number} input
+   * @return {string|number|undefined}
+   */
   static fixColorInput (input) {
-    if (input != null) {
-      if (CSS_COLOR_NAMES.indexOf(input.toLowerCase()) !== -1) {
-        return input
-      } else {
-        return "#" + input
-      }
+    if (input) {
+      return CSS_COLOR_NAMES.indexOf(input.toLowerCase()) !== -1 ? input : "#" + input
     }
   }
 
-  sendToNotifications (information) {
-    if (this.notify) {
-      //console.log(JSON.stringify(information));
-      this.notifyRedeemer.innerHTML = (information.redeemer)
-      this.notifyContent.innerHTML = (": " + information.message)
+  /**
+   * Runs on TtsEvent.NEW_CONVERSATION_ELEMENT.
+   * @param {TtsMessageData} event
+   */
+  startNotifications (event) {
+    document.getElementById("notifyRedeemer").style.color = this.redeemerColorOverwrite || event.redeemerColor //if overwrite is undefined use parameter colour
+    document.getElementById("notifyRedeemer").innerHTML = event.redeemer
+    document.getElementById("notifyContent").innerHTML = `: ${event.message}`
 
-      this.notifyElement.style.display = "block"
-    }
+    OnScreenMessage.setDivNotifyVisibility(true)
 
   }
 
+  /**
+   * Runs on TtsEvent.ENDED.
+   */
   endNotifications () {
-    if (this.notify) {
-      this.notifyElement.style.display = "none"
-    }
+    OnScreenMessage.setDivNotifyVisibility(false)
+  }
+
+  /**
+   * @param {boolean} visible
+   * @static
+   * @private
+   */
+  static setDivNotifyVisibility (visible) {
+    document.getElementById("notifications").style.display = visible ? "block" : "none"
   }
 }
 

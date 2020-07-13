@@ -63,6 +63,9 @@ class Tts {
     this.volume = data.volume !== undefined ? data.volume : this.volume
     this.maxMessageTime = data.maxMessageTime !== undefined ? data.maxMessageTime : this.maxMessageTime
     this.useQueue = !!data.queue
+    data.data.forEach(dt => dt.redeemer = data.redeemer)
+    data.data.forEach(dt => dt.redeemerColor = data.redeemerColor)
+
     this.redemptionQueue.push(data.data)
 
     await this.run()
