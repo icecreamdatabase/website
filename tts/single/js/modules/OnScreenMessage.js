@@ -10,29 +10,30 @@ class OnScreenMessage {
     this.main = main
 
     // If no notifcation don't set any settings or add event handlers
-    if (!findGetParameter("notifications")) {
+    if (!findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_ENABLED)) {
       return
     }
 
     // Set style from query parameter
-    document.getElementById("notifications").style.width = findGetParameter("width") || "630px"
-    document.getElementById("notifications").style.fontSize = findGetParameter("fontsize") || "13px"
+    document.getElementById("notifications").style.width = findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_WIDTH) || "630px"
+    document.getElementById("notifications").style.fontSize = findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_FONTSIZE) || "13px"
 
-    this.redeemerColorOverwrite = OnScreenMessage.fixColorInput(findGetParameter("redeemercolor")) // || "#9147ff"
-    document.getElementById("notifyContent").style.color = OnScreenMessage.fixColorInput(findGetParameter("contentcolor")) || "white"
+    this.redeemerColorOverwrite = OnScreenMessage.colorHexStringHandler(findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_REDEEMER_COLOR_OVERWRITE))
+    document.getElementById("notifyContent").style.color = OnScreenMessage.colorHexStringHandler(findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_CONTENT_COLOR)) || "white"
 
     this.main.tts.on(TtsEvents.NEW_CONVERSATION_ELEMENT, this.startNotifications.bind(this))
     this.main.tts.on(TtsEvents.ENDED, this.endNotifications.bind(this))
   }
 
   /**
-   * @param {string|number} input
+   * If it's not a valid named css colour add a # in front of the assumed HEX string.
+   * @param {string|number|undefined} color
    * @return {string|number|undefined}
    */
-  static fixColorInput (input) {
-    if (input) {
-      return CSS_COLOR_NAMES.indexOf(input.toLowerCase()) !== -1 ? input : "#" + input
-    }
+  static colorHexStringHandler (color) {
+    return color && !CSS_COLOR_NAMES.includes(color.toLowerCase())
+      ? `#${color}`
+      : color
   }
 
   /**
@@ -45,7 +46,6 @@ class OnScreenMessage {
     document.getElementById("notifyContent").innerHTML = `: ${event.message}`
 
     OnScreenMessage.setDivNotifyVisibility(true)
-
   }
 
   /**

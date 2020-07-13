@@ -72,7 +72,7 @@ class Ws {
   }
 
   connect () {
-    this.socket = new WebSocket(findGetParameter('local') ? 'ws://localhost:4700' : 'wss://ws.icecreamdatabase.com')
+    this.socket = new WebSocket(findGetParameter(QueryParameter.LOCAL) ? 'ws://localhost:4700' : 'wss://ws.icecreamdatabase.com')
 
     this.socket.addEventListener('open', this.onOpen.bind(this))
     this.socket.addEventListener('message', this.onMessage.bind(this))
@@ -91,7 +91,7 @@ class Ws {
     let data = {
       cmd: WsCmds.CONNECT,
       data: {
-        channel: (findGetParameter("channel") || "").replace('\u{E0000}', '').trim().toLowerCase()
+        channel: CHANNEL_NAME
       },
       version: WS_VERSION
     }
