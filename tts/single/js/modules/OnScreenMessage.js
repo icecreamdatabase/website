@@ -15,8 +15,8 @@ class OnScreenMessage {
     }
 
     // Set style from query parameter
-    document.getElementById("notifications").style.width = findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_WIDTH) || "630px"
-    document.getElementById("notifications").style.fontSize = findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_FONTSIZE) || "13px"
+    document.getElementById("notifications").style.width = findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_WIDTH) || "auto"
+    document.getElementById("notifications").style.fontSize = findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_FONTSIZE) || "24px"
 
     this.redeemerColorOverwrite = OnScreenMessage.colorHexStringHandler(findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_REDEEMER_COLOR_OVERWRITE))
     document.getElementById("notifyContent").style.color = OnScreenMessage.colorHexStringHandler(findGetParameter(QueryParameter.ON_SCREEN_MESSAGES_CONTENT_COLOR)) || "white"
