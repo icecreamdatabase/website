@@ -31,10 +31,33 @@
     }
   </style>
   <title>Text to speech</title>
-</head>
+  <script src="js/CookieHelper.js"></script>
+  <script src="js/OauthHelper.js"></script>
+  <script>
+
+    let oauth2Data = parseHash()
+    if (oauth2Data.access_token) {
+      validate(oauth2Data.access_token).then(data => {
+        console.log(data)
+        if (data.user_id) {
+          setCookie("access_token", oauth2Data.access_token, data.expires_in)
+          setCookie("client_id", data.client_id, data.expires_in)
+          setCookie("userId", data.user_id, data.expires_in)
+        } else {
+          //Invalidate cookies
+          setCookie("access_token", "", -1)
+          setCookie("client_id", "", -1)
+          setCookie("userId", "", -1)
+        }
+      }).catch(() => {
+        //Invalidate cookies
+        setCookie("access_token", "", -1)
+        setCookie("client_id", "", -1)
+        setCookie("userId", "", -1)
+      })
+    }
+
+  </script>
 <body>
 <h1>I will create an index page for the TTS system soon.</h1>
-<!--<img src="https://i.nuuls.com/j6W4b.png" style="height: 100%; position: absolute; top: 0; bottom: 0">-->
 
-</body>
-</html>
